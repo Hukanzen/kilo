@@ -34,6 +34,8 @@
 
 #define KILO_VERSION "0.0.2"
 
+#define __DEBUG_MODE__ 0 /* 1ならデバッグモード */
+
 #define _BSD_SOURCE
 #define _GNU_SOURCE
 
@@ -111,17 +113,18 @@ struct editorConfig {
 static struct editorConfig E;
 
 enum KEY_ACTION {
-	KEY_NULL  = 0,   /* NULL */
-	CTRL_C    = 3,   /* Ctrl-c */
-	CTRL_D    = 4,   /* Ctrl-d */
-	CTRL_F    = 6,   /* Ctrl-f */
-	CTRL_H    = 8,   /* Ctrl-h */
-	TAB       = 9,   /* Tab */
-	CTRL_L    = 12,  /* Ctrl+l */
-	ENTER     = 13,  /* Enter */
-	CTRL_Q    = 17,  /* Ctrl-q */
-	CTRL_S    = 19,  /* Ctrl-s */
-	CTRL_U    = 21,  /* Ctrl-u */
+	KEY_NULL  = 0,  /* NULL */
+	CTRL_C    = 3,  /* Ctrl-c */
+	CTRL_D    = 4,  /* Ctrl-d */
+	CTRL_F    = 6,  /* Ctrl-f */
+	CTRL_H    = 8,  /* Ctrl-h */
+	TAB       = 9,  /* Tab */
+	CTRL_L    = 12, /* Ctrl+l */
+	ENTER     = 13, /* Enter */
+	CTRL_Q    = 17, /* Ctrl-q */
+	CTRL_S    = 19, /* Ctrl-s */
+	CTRL_U    = 21, /* Ctrl-u */
+	CTRL_X    = 24,
 	ESC       = 27,  /* Escape */
 	BACKSPACE = 127, /* Backspace */
 	/* The following are just soft codes, not really reported by the
@@ -1272,6 +1275,10 @@ void editorProcessKeypress(int fd)
 	static int quit_times = KILO_QUIT_TIMES;
 
 	int c = editorReadKey(fd);
+	int c2;
+#if __DEBUG_MODE__ == 1
+	printf("Press = %d", c);
+#endif
 	switch (c) {
 	case ENTER: /* Enter */
 		editorInsertNewline();
@@ -1280,7 +1287,7 @@ void editorProcessKeypress(int fd)
 		/* We ignore ctrl-c, it can't be so simple to lose the changes
 		 * to the edited file. */
 		break;
-	case CTRL_Q: /* Ctrl-q */
+	case CTRL_Q: /* Ctrl-q */ /* 終了 */
 		/* Quit if the file was already saved. */
 		if (E.dirty && quit_times) {
 			editorSetStatusMessage("WARNING!!! File has unsaved changes. "
@@ -1291,12 +1298,32 @@ void editorProcessKeypress(int fd)
 		}
 		exit(0);
 		break;
-	case CTRL_S: /* Ctrl-s */
-		editorSave();
+	// case CTRL_S: /* Ctrl-s */ /* 保存 */
+	// editorSave();
+	// break;
+	// case CTRL_F: /* 検索 */
+	// editorFind(fd);
+	// break;
+	case CTRL_X: /* Emacs モード */
+		// puts("CTRL_X");
+		c2 = editorReadKey(fd);
+		switch (c2) {
+		case CTRL_S: /* 保存 */
+			editorSave();
+			break;
+		case CTRL_C: /* 終了 */
+			if (E.dirty) {
+				editorSetStatusMessage("WARNING!! FIle has unsaved.");
+				return;
+			}
+			exit(0);
+			break;
+		default:
+			editorInsertChar(c);
+			break;
+		}
 		break;
-	case CTRL_F:
-		editorFind(fd);
-		break;
+
 	case BACKSPACE: /* Backspace */
 	case CTRL_H:    /* Ctrl-h */
 	case DEL_KEY:
@@ -1368,7 +1395,9 @@ int getColorSchemaFile(char files[][FILENAME_MAX])
 	char           filename[FILENAME_MAX];
 	int            filenum;
 	char           colordir[] = {"color"};
+#if __DEBUG_MODE__ == 0
 	printf("colordir = %s\n", colordir);
+#endif
 
 	dir = opendir(colordir);
 	for (dp = readdir(dir), filenum = 0; dp != NULL; dp = readdir(dir)) {
@@ -1380,16 +1409,18 @@ int getColorSchemaFile(char files[][FILENAME_MAX])
 			/* upp directory */
 			continue;
 		}
-		// strcat(colordir,filename);
+
 		sprintf(files[filenum], "%s/%s", colordir, filename);
-		// printf("%s\n", filename);
-		// strcpy(files[filenum], filename);
+#if __DEBUG_MODE__ == 0
 		printf("%d,%s\n", filenum, files[filenum]);
+#endif
 		filenum++;
 	}
 
 	closedir(dir);
+#if __DEBUG_MODE__ == 0
 	printf("filenum = %d\n", filenum);
+#endif
 	return filenum;
 }
 
@@ -1457,14 +1488,18 @@ void initColor(void)
 	FILE *colorrfp;
 
 	filenum = getColorSchemaFile(csfiles);
+#if __DEBUG_MODE__ == 0
 	printf("%d,%s\n", filenum, csfiles[0]);
+#endif
 
 	for (int i = 0; i < filenum; i++) {
 		colorrfp = fopen(csfiles[i], "r");
 		while (fscanf(colorrfp, "%s", tmpword) != EOF) {
 			Trim(tmpword);
 			strcpy(word[wordnum], tmpword);
+#if __DEBUG_MODE__ == 0
 			printf("%s\n", word[wordnum]);
+#endif
 			wordnum++;
 		}
 		fclose(colorrfp);
@@ -1473,19 +1508,26 @@ void initColor(void)
 	C_HL_keywords = get_2arr_char(wordnum, CKEYWORDLEN);
 	for (int i = 0; i < wordnum; i++) {
 		strcpy(C_HL_keywords[i], word[i]);
+#if __DEBUG_MODE__ == 0
 		printf("C_HL_keywords[%d],%s\n", i, C_HL_keywords[i]);
+#endif
 	}
 
+#if __DEBUG_MODE__ == 0
 	printf("C_HL_EXTENSIONS_ENTRIES = %d\n", C_HL_EXTENSIONS_ENTRIES);
+#endif
+
 	HLDB[0].filematch = (char **)calloc(C_HL_EXTENSIONS_ENTRIES, sizeof(char *));
 	HLDB[0].keywords  = (char **)calloc(wordnum, sizeof(char *));
 
 	for (int i = 0; i < C_HL_EXTENSIONS_ENTRIES - 1; i++) {
 		HLDB[0].filematch[i] = get_1_arr_char(strlen(C_HL_extensions[i]) + 1);
+
+#if __DEBUG_MODE__ == 0
 		printf("C_HL_extensions[%d] = %s,%d\n", i, C_HL_extensions[i],
 		       strlen(C_HL_extensions[i]) + 1);
+#endif
 		strcpy(HLDB[0].filematch[i], C_HL_extensions[i]);
-		// sprintf(HLDB[0].filematch[i],"%s",C_HL_extensions[i]);
 	}
 
 	for (int i = 0; i < wordnum; i++) {

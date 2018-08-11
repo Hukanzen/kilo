@@ -1,7 +1,7 @@
-#include<stdio.h>
+aaaaaa#include<stdio.h>
 
 int main(void)
-{
+{
 
 double
 }
