@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define KILO_VERSION "0.0.1"
+#define KILO_VERSION "0.0.2"
 
 #define _BSD_SOURCE
 #define _GNU_SOURCE
@@ -948,6 +948,7 @@ void editorRefreshScreen(void)
 
 	abAppend(&ab, "\x1b[?25l", 6); /* Hide cursor. */
 	abAppend(&ab, "\x1b[H", 3);    /* Go home. */
+
 	for (y = 0; y < E.screenrows; y++) {
 		int filerow = E.rowoff + y;
 
@@ -1062,6 +1063,8 @@ void editorRefreshScreen(void)
 	write(STDOUT_FILENO, ab.b, ab.len);
 	abFree(&ab);
 }
+
+void editorCleanScreen(void) { /* そのうちつくる */ }
 
 /* Set an editor status message for the second line of the status, at the
  * end of the screen. */
@@ -1496,8 +1499,8 @@ void initColor(void)
 int main(int argc, char **argv)
 {
 	if (argc != 2) {
-	fprintf(stderr, "Usage: kilo <filename>\n");
-	exit(1);
+		fprintf(stderr, "Usage: kilo <filename>\n");
+		exit(1);
 	}
 
 	initColor();
@@ -1507,9 +1510,10 @@ int main(int argc, char **argv)
 	editorOpen(argv[1]);
 	enableRawMode(STDIN_FILENO);
 	editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F =find");
-	while (1) {
-		editorRefreshScreen();
-		editorProcessKeypress(STDIN_FILENO);
-	}
+	// while (1) {
+	editorRefreshScreen();
+	// editorProcessKeypress(STDIN_FILENO);
+	// }
+	editorCleanScreen();
 	return 0;
 }
