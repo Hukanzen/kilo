@@ -1480,7 +1480,7 @@ char **get_2arr_char(int x, int y)
 #define CKEYWORDNUM 16
 void initColor(void)
 {
-	char  csfiles[FILENUM][FILENAME_MAX];
+	char  csfiles[FILENUM][FILENAME_MAX]; // 
 	char  word[CKEYWORDNUM][CKEYWORDLEN];
 	char  tmpword[CKEYWORDNUM];
 	int   filenum;
