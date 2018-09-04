@@ -1,2 +1,8 @@
-int
-double
+int|
+long|
+double|
+float|
+char|
+unsigned|
+signed|
+void|

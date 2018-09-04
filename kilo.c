@@ -114,17 +114,33 @@ static struct editorConfig E;
 
 enum KEY_ACTION {
 	KEY_NULL  = 0,  /* NULL */
+	CTRL_A    = 1,
+	CTRL_B    = 2,
 	CTRL_C    = 3,  /* Ctrl-c */
 	CTRL_D    = 4,  /* Ctrl-d */
 	CTRL_F    = 6,  /* Ctrl-f */
+	CTRL_G,
 	CTRL_H    = 8,  /* Ctrl-h */
+	// CTRL_I,
 	TAB       = 9,  /* Tab */
+	CTRL_J    = 10,
+	CTRL_K    = 11,
 	CTRL_L    = 12, /* Ctrl+l */
 	ENTER     = 13, /* Enter */
+	CTRL_N    = 14,
+	// CTRL_M,
+	CTRL_O    = 15,
+	CTRL_P    = 16,
 	CTRL_Q    = 17, /* Ctrl-q */
+	CTRL_R    = 18,
 	CTRL_S    = 19, /* Ctrl-s */
+	CTRL_T    = 20,
 	CTRL_U    = 21, /* Ctrl-u */
+	CTRL_V    = 22,
+	CTRL_W    = 23,
 	CTRL_X    = 24,
+	CTRL_Y    = 25,
+	CTRL_Z    = 26,
 	ESC       = 27,  /* Escape */
 	BACKSPACE = 127, /* Backspace */
 	/* The following are just soft codes, not really reported by the
@@ -1323,9 +1339,20 @@ void editorProcessKeypress(int fd)
 			break;
 		}
 		break;
-
+	case CTRL_P:
+		editorMoveCursor(ARROW_UP);
+		break;
+	case CTRL_N:
+		editorMoveCursor(ARROW_DOWN);
+		break;
+	case CTRL_F:
+		editorMoveCursor(ARROW_RIGHT);
+		break;
+	case CTRL_B:
+		editorMoveCursor(ARROW_LEFT);
+		break;
 	case BACKSPACE: /* Backspace */
-	case CTRL_H:    /* Ctrl-h */
+	// case CTRL_H:    /* Ctrl-h */
 	case DEL_KEY:
 		editorDelChar();
 		break;
@@ -1514,7 +1541,7 @@ void initColor(void)
 	}
 
 #if __DEBUG_MODE__ == 0
-	printf("C_HL_EXTENSIONS_ENTRIES = %d\n", C_HL_EXTENSIONS_ENTRIES);
+	printf("C_HL_EXTENSIONS_ENTRIES = %lud\n", C_HL_EXTENSIONS_ENTRIES);
 #endif
 
 	HLDB[0].filematch = (char **)calloc(C_HL_EXTENSIONS_ENTRIES, sizeof(char *));
@@ -1524,7 +1551,7 @@ void initColor(void)
 		HLDB[0].filematch[i] = get_1_arr_char(strlen(C_HL_extensions[i]) + 1);
 
 #if __DEBUG_MODE__ == 0
-		printf("C_HL_extensions[%d] = %s,%d\n", i, C_HL_extensions[i],
+		printf("C_HL_extensions[%d] = %s,%lud\n", i, C_HL_extensions[i],
 		       strlen(C_HL_extensions[i]) + 1);
 #endif
 		strcpy(HLDB[0].filematch[i], C_HL_extensions[i]);
@@ -1553,7 +1580,7 @@ int main(int argc, char **argv)
 	editorSelectSyntaxHighlight(argv[1]);
 	editorOpen(argv[1]);
 	enableRawMode(STDIN_FILENO);
-	editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F =find");
+	editorSetStatusMessage("C-x C-c = Quit | ");
 	while (1) {
 		editorRefreshScreen();
 		editorProcessKeypress(STDIN_FILENO);

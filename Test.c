@@ -1,10 +1,11 @@
-aaaaaa#include<stdio.h>
+a#include<stdio.h>
 
 int main(void)
-{
+{
 
 double
 }
 char 
-String
+Stinga
+class
 :
